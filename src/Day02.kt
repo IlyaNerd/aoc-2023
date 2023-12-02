@@ -55,12 +55,21 @@ fun main() {
     }
 
     fun part2(input: List<String>): Int {
-        return input.size
+        return input
+            .map { line -> line.toGame() }
+            .sumOf { game ->
+                if (game.sets.isEmpty()) 0
+                else {
+                    game.sets.maxOf { it.blue } *
+                            game.sets.maxOf { it.green } *
+                            game.sets.maxOf { it.red }
+                }
+            }
     }
 
     // test if implementation meets criteria from the description, like:
     val testInput = readInput("Day02_test")
-    check(part1(testInput).also { it.println() } == 8)
+    check(part2(testInput).also { it.println() } == 2286)
 
     val input = readInput("Day02")
     part1(input).println()

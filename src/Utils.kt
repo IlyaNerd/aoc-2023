@@ -19,3 +19,5 @@ fun String.md5() = BigInteger(1, MessageDigest.getInstance("MD5").digest(toByteA
  * The cleaner shorthand for printing output.
  */
 fun Any?.println() = println(this)
+
+fun String.substringSafe(start: Int, end: Int) = this.substring(start, if (end > this.length) this.length else end)

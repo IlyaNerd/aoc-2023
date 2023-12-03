@@ -61,8 +61,7 @@ fun main() {
         return input.toBoxes()
             .asSequence()
             .filter { it.hasGear() }
-            .map { it.gearLocation() to it }
-            .groupBy({ (location, _) -> location }) { (_, box) -> box.number }
+            .groupBy({ box -> box.gearLocation() }) { box -> box.number }
             .map { if (it.value.size == 2) it.value[0] * it.value[1] else 0 }
             .sum()
     }

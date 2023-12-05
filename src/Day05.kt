@@ -60,13 +60,42 @@ fun main() {
             }
     }
 
-    fun part2(input: List<String>): Int {
-        return input.size
+    fun List<Long>.toPairs(): List<Pair<Long, Long>> {
+        return indices
+            .filter { it == 0 || it % 2 == 0 }
+            .map { this[it] to this[it + 1] }
+    }
+
+    fun part2(input: List<String>): Long {
+        val seedMaps = input.drop(2).toSeedMaps()
+
+        var minSoFar = Long.MAX_VALUE
+        val start = System.currentTimeMillis()
+        input.first { it.startsWith("seeds:") }.let { seeds ->
+            seeds.removePrefix("seeds:").split(" ").filter { it.isNotBlank() }.map { it.trim().toLong() }
+        }
+            .toPairs()
+            .asSequence()
+            .forEach { pair ->
+                LongRange(pair.first, pair.first + pair.second - 1)
+                    .asSequence()
+                    .map { seed ->
+                        getSeedProperty(seedMaps, "location", seed, "seed").second
+                    }
+                    .forEach { location ->
+                        if (location < minSoFar) {
+                            minSoFar = location
+                        }
+                    }
+            }
+            .also { println("Took ms: ${System.currentTimeMillis() - start}") }
+
+        return minSoFar
     }
 
     // test if implementation meets criteria from the description, like:
     val testInput = readInput("Day05_test")
-    check(part1(testInput).also { it.println() } == 35L)
+    check(part2(testInput).also { it.println() } == 46L)
 
     val input = readInput("Day05")
     part1(input).println()

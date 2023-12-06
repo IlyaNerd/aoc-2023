@@ -1,6 +1,24 @@
 fun main() {
+    data class TimeDistance(
+        val time: Int,
+        val minDistance: Int,
+    )
+
     fun part1(input: List<String>): Int {
-        return input.size
+        val (times, distances) = input.map {
+            it.substringAfter(':').split(' ').filter { it.isNotBlank() }.map { it.toInt() }
+        }
+        val timeDistances = times.zip(distances) { a, b -> TimeDistance(a, b) }
+        return timeDistances
+            .map {
+                val timeRange = 1..<it.time
+                timeRange.count {holdTime ->
+                    val leftOverTime = it.time - holdTime
+                    val distanceTraveled = leftOverTime * holdTime
+                    distanceTraveled > it.minDistance
+                }
+            }
+            .reduce { a, b -> a * b }
     }
 
     fun part2(input: List<String>): Int {

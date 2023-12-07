@@ -22,13 +22,7 @@ sealed interface CardSet : Comparable<CardSet> {
     data class FH(val three: Char, val two: Char, override val cards: List<Char>) : CardSet
     data class Three(val card: Char, val other: Char, val other2: Char, override val cards: List<Char>) : CardSet
     data class Pairs(val card1: Char, val card2: Char, val other: Char, override val cards: List<Char>) : CardSet
-    data class Pair1(
-        val pair: Char,
-        val other: Char,
-        val other2: Char,
-        val other3: Char,
-        override val cards: List<Char>
-    ) : CardSet
+    data class Pair1(val pair: Char, val other: Char, val other2: Char, val other3: Char, override val cards: List<Char>) : CardSet
 
     data class HighHand(override val cards: List<Char>) : CardSet
 
@@ -51,9 +45,8 @@ sealed interface CardSet : Comparable<CardSet> {
     }
 
     private fun compareCards(other: CardSet): Int =
-        compareBy(
-            *(0..4).map { i -> { it: CardSet -> cardMapping[it.cards[i]]!! } }.toTypedArray()
-        ).compare(this, other)
+        compareBy(*(0..4).map { i -> { it: CardSet -> cardMapping[it.cards[i]]!! } }.toTypedArray())
+            .compare(this, other)
 
     fun hasJoker() = cards.any { it == 'J' }
 

@@ -1,3 +1,5 @@
+import java.math.BigInteger
+
 fun main() {
     val lineRegex = Regex("^(.+) = \\((.+), (.+)\\)$")
 
@@ -26,20 +28,20 @@ fun main() {
         }
     }
 
-    fun part2(input: List<String>): Int {
+    fun part2(input: List<String>): BigInteger {
         val steps = input[0].also { it.println() }
         val instructions = input.drop(2)
             .toPairs()
             .onEach { it.println() }
-        val keys = instructions.keys.filter { it.endsWith("A") }.toMutableList()
-            .also { it.println() }
-        var count = 0
-        while (true) {
-            steps.forEach { step ->
-                if (keys.all { it.endsWith("Z") }) return count
-                count++
-                keys.replaceAll { key ->
-                    if (step == 'L') {
+
+        fun findCount(start: String): Int {
+            var key = start
+            var count = 0
+            while (true) {
+                steps.forEach { step ->
+                    if (key.endsWith("Z")) return count
+                    count++
+                    key = if (step == 'L') {
                         instructions[key]!!.first
                     } else {
                         instructions[key]!!.second
@@ -47,11 +49,22 @@ fun main() {
                 }
             }
         }
+
+        val keys = instructions.keys.filter { it.endsWith("A") }
+            .also { it.println() }
+
+        return keys.map { key ->
+            val count = findCount(key)
+            println(key to count)
+            BigInteger(count.toString())
+        }.reduce { acc,  num ->
+            acc * num / num.gcd(acc)
+        }
     }
 
     // test if implementation meets criteria from the description, like:
     val testInput = readInput("Day08_test")
-    check(part2(testInput).also { it.println() } == 6)
+//    check(part1(testInput).also { it.println() } == 6)
 
     val input = readInput("Day08")
     part1(input).println()

@@ -1,19 +1,21 @@
 fun main() {
+    fun List<Int>.toSequenceTree(): MutableList<List<Int>> {
+        val rows = mutableListOf<List<Int>>()
+        rows.add(this)
+        var next = this
+        while (true) {
+            rows.add(next.zipWithNext { a, b -> b - a }.also { next = it })
+            if (next.distinct().size == 1) break
+        }
+        return rows
+    }
+
     fun part1(input: List<String>): Int {
         return input
             .asSequence()
             .map { line -> line.split(' ').map { it.toInt() } }
             .onEach { it.println() }
-            .map { list ->
-                val rows = mutableListOf<List<Int>>()
-                rows.add(list)
-                var next = list
-                while (true) {
-                    rows.add(next.zipWithNext { a, b -> b - a }.also { next = it })
-                    if (next.distinct().size == 1) break
-                }
-                rows
-            }
+            .map { list -> list.toSequenceTree() }
             .onEach { it.println() }
             .map { rows ->
                 rows.reversed()
@@ -26,12 +28,23 @@ fun main() {
     }
 
     fun part2(input: List<String>): Int {
-        return input.size
+        return input
+            .asSequence()
+            .map { line -> line.split(' ').map { it.toInt() } }
+            .map { list ->
+                val rows = list.toSequenceTree()
+                rows.reversed()
+                    .drop(1)
+                    .fold(rows.last().first()) { acc, ints ->
+                        ints.first() - acc
+                    }
+            }
+            .sum()
     }
 
     // test if implementation meets criteria from the description, like:
     val testInput = readInput("Day09_test")
-    check(part1(testInput).also { it.println() } == 114)
+    check(part2(testInput).also { it.println() } == 2)
 
     val input = readInput("Day09")
     part1(input).println()

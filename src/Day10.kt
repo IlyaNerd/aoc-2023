@@ -3,42 +3,50 @@ import Direction.*
 enum class Direction {
     TOP, BOTTOM, LEFT, RIGHT
 }
+
+data class Point(val x: Int, val y: Int, val s: Char)
+
 fun main() {
 
-    fun part1(input: List<String>): Int {
-        val startLineIndex = input.indexOfFirst { it.contains('S') }
-        val startLine = input[startLineIndex]
+    fun List<String>.toLoop(): List<Point> {
+        val startLineIndex = this.indexOfFirst { it.contains('S') }
+        val startLine = this[startLineIndex]
         val startIndex = startLine.indexOf('S')
 
-        var from = TOP
+        val points = mutableListOf<Point>()
+        points.add(Point(startLineIndex, startIndex, startLine[startIndex]))
+
+        var from: Direction
         var i = startLineIndex
         var j = startIndex
 
         when {
-            input.getOrNull(i - 1)?.get(j) in listOf('F', '7', '|') -> {
+            this.getOrNull(i - 1)?.get(j) in listOf('F', '7', '|') -> {
                 i--
                 from = BOTTOM
             }
-            input.getOrNull(i + 1)?.get(j) in listOf('L', 'J', '|') -> {
+
+            this.getOrNull(i + 1)?.get(j) in listOf('L', 'J', '|') -> {
                 i++
                 from = TOP
             }
-            input[i].getOrNull(j - 1) in listOf('F', 'L', '-') -> {
+
+            this[i].getOrNull(j - 1) in listOf('F', 'L', '-') -> {
                 j--
                 from = RIGHT
             }
-            input[i].getOrNull(j + 1) in listOf('7', 'J', '-') -> {
+
+            this[i].getOrNull(j + 1) in listOf('7', 'J', '-') -> {
                 j++
                 from = LEFT
             }
+
             else -> error("unreachable")
         }
 
-
-        var steps = 0
         while (true) {
-            println("$i $j $from")
-            when (input[i][j]) {
+            points.add(Point(i, j, this[i][j]))
+            when (this[i][j]) {
                 '|' -> when (from) {
                     TOP -> i++
                     BOTTOM -> i--
@@ -58,10 +66,12 @@ fun main() {
                         j++
                         from = LEFT
                     }
+
                     RIGHT -> {
                         i--
                         from = BOTTOM
                     }
+
                     LEFT,
                     BOTTOM -> error("unreachable $i $j")
                 }
@@ -71,10 +81,12 @@ fun main() {
                         j--
                         from = RIGHT
                     }
+
                     LEFT -> {
                         i--
                         from = BOTTOM
                     }
+
                     RIGHT,
                     BOTTOM -> error("unreachable $i $j")
                 }
@@ -84,10 +96,12 @@ fun main() {
                         j--
                         from = RIGHT
                     }
+
                     LEFT -> {
                         i++
                         from = TOP
                     }
+
                     TOP,
                     RIGHT -> error("unreachable $i $j")
                 }
@@ -97,10 +111,12 @@ fun main() {
                         j++
                         from = LEFT
                     }
+
                     RIGHT -> {
                         i++
                         from = TOP
                     }
+
                     TOP,
                     LEFT -> error("unreachable $i $j")
                 }
@@ -109,10 +125,12 @@ fun main() {
                 'S' -> break
                 else -> error("unreachable $i $j")
             }
-            steps++
         }
+        return points.toList()
+    }
 
-        return (steps + 1) / 2
+    fun part1(input: List<String>): Int {
+        return input.toLoop().size / 2
     }
 
     fun part2(input: List<String>): Int {

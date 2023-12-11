@@ -1,9 +1,8 @@
+import java.util.*
 import kotlin.math.absoluteValue
-import kotlin.math.pow
-import kotlin.math.sqrt
 
 fun main() {
-    data class Point(val x: Int, val y: Int) : Comparable<Point> {
+    data class Point(val x: Long, val y: Long) : Comparable<Point> {
         override fun compareTo(other: Point): Int = compareBy<Point>({ it.x }, { it.y }).compare(this, other)
     }
 
@@ -32,9 +31,18 @@ fun main() {
             .map { String(it.toCharArray()) }
     }
 
+    fun List<String>.findEmptySpace(): Pair<List<Int>, List<Int>> {
+        val rows = this.mapIndexedNotNull { i, s -> if (s.all { c -> c == '.' }) i else null }
+        val colNumbers = this.first().toList().indices
+        val cols = colNumbers.mapIndexedNotNull { j, col ->
+            if (this.all { row -> row[col] == '.' }) j else null
+        }
+        return rows to cols
+    }
+
     fun List<String>.findGalaxies() = this.mapIndexed { i, line ->
         line.mapIndexed { j, c ->
-            if (c == '#') Point(i, j) else null
+            if (c == '#') Point(i.toLong(), j.toLong()) else null
         }.filterNotNull()
     }.flatten()
 
@@ -46,42 +54,58 @@ fun main() {
         }
     }.distinct()
 
-    fun Pair<Point, Point>.distance(): Int {
+    fun Pair<Point, Point>.distance(): Long {
         val lx = first.x
         val ly = first.y
 
         val rx = second.x
         val ry = second.y
 
-        return when {
-            lx == rx -> ry - ly
-            ly == ry -> rx - lx
-            (lx - rx).absoluteValue == 1 -> 1 + (ry - ly).absoluteValue
-            (ly - ry).absoluteValue == 1 -> 1 + (rx - lx).absoluteValue
-            else -> {
-                val xLen = (rx - lx).absoluteValue
-                val yLen = (ry - ly).absoluteValue
-                xLen + yLen
-            }
-        }.absoluteValue
+        val xLen = (rx - lx).absoluteValue
+        val yLen = (ry - ly).absoluteValue
+        return xLen + yLen
     }
 
-    fun part1(input: List<String>): Int {
+    fun part1(input: List<String>): Long {
         return input
             .expand()
             .onEach { it.println() }
             .findGalaxies()
             .toPairs()
-            .sumOf { points -> points.distance().also { println(points to it) } }
+            .sumOf { points -> points.distance() }
     }
 
-    fun part2(input: List<String>): Int {
-        return input.size
+
+    fun Point.adjustBy(emptyRows: List<Int>, emptyCols: List<Int>, multiplier: Int): Point {
+        val (x, y) = this
+        val rowIndex = emptyRows.indexOfLast { x > it }
+        val colIndex = emptyCols.indexOfLast { y > it }
+
+        val newX = if (rowIndex != -1) {
+            x + (rowIndex + 1) * (multiplier - 1)
+        } else x
+
+        val newY = if (colIndex != -1) {
+            y + (colIndex + 1) * (multiplier - 1)
+        } else y
+        return copy(x = newX, y = newY)
+    }
+
+    fun part2(input: List<String>): Long {
+        val (emptyRows, emptyCols) = input.findEmptySpace()
+        val multiplier = 1000000
+
+        val galaxies = input
+            .findGalaxies()
+            .map { it.adjustBy(emptyRows, emptyCols, multiplier).also { n -> println(it to n) } }
+            .toPairs()
+        return galaxies
+            .sumOf { points -> points.distance() }
     }
 
     // test if implementation meets criteria from the description, like:
     val testInput = readInput("Day11_test")
-    check(part1(testInput).also { it.println() } == 374)
+    check(part2(testInput).also { it.println() } == 8410L)
 
     val input = readInput("Day11")
     part1(input).println()

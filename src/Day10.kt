@@ -6,6 +6,13 @@ enum class Direction {
 
 data class Point(val x: Int, val y: Int)
 
+fun sReplacement(value: Char): Char {
+    return if (value == 'S') {
+        // S is | in the main file
+        '7'
+    } else value
+}
+
 fun main() {
 
     fun List<String>.toLoop(): List<Point> {
@@ -133,274 +140,223 @@ fun main() {
         return input.toLoop().size / 2
     }
 
-//    | is a vertical pipe connecting north and south.
-//    - is a horizontal pipe connecting east and west.
-//    L is a 90-degree bend connecting north and east.
-//    J is a 90-degree bend connecting north and west.
-//    7 is a 90-degree bend connecting south and west.
-//    F is a 90-degree bend connecting south and east.
-//    . is ground; there is no pipe in this tile.
-//    S is the starting position of the animal; there is a pipe on this tile, but your sketch doesn't show what shape the pipe has.
+    data class Step(val x: Int, val y: Int, val to: Direction)
 
-    data class PossibleStep(val point: Point, val from: Direction?, val to: Direction?)
+    fun isInTheLoop(input: List<String>, x: Int, y: Int): Boolean {
+        val seen = mutableSetOf<Step>()
 
-
-    fun isEnclosedByLoop(input: List<String>, x: Int, y: Int): Boolean {
-        fun sReplacement(value: Char): Char {
-            return if (value == 'S') {
-                // todo S
-                // S is | in the main file
-//                '|'
-                '|'
-            } else value
+        fun get(i: Int, j: Int): Char? {
+            return if (i < 0 || i >= input.size || j < 0 || j >= input[i].length) null
+            else input[i][j].let(::sReplacement)
         }
 
-        val seen = mutableSetOf<PossibleStep>()
+        // sticking to walls of pipes
+        fun getPossibleSteps(i: Int, j: Int, location: Direction): List<Step> {
+            val steps = mutableListOf<Step>()
+            when (val c = get(i, j)) {
+                null -> steps.add(Step(i, j, TOP))
+                '.' -> {
+                    steps.add(Step(i, j + 1, LEFT))
+                    steps.add(Step(i, j - 1, RIGHT))
+                    steps.add(Step(i - 1, j, BOTTOM))
+                    steps.add(Step(i + 1, j, TOP))
+                }
 
-        fun getPossibleSteps(i: Int, j: Int, from: Direction?, to: Direction?): List<PossibleStep> {
-            val possibleSteps = mutableListOf<PossibleStep>()
+                else -> when (location) {
+                    TOP -> when (c) {
+                        // im in the -, 7, F, .
+                        '-' -> {
+                            steps.add(Step(i - 1, j, BOTTOM))
+                            steps.add(Step(i, j - 1, TOP))
+                            steps.add(Step(i, j + 1, TOP))
+                        }
 
-            if (from == null || to == null || from == TOP && to == LEFT) {
-                // bottom left
-                if (i + 1 >= input.size) possibleSteps.add(PossibleStep(Point(i + 1, j), TOP, LEFT))
-                else when (input[i + 1][j].let(::sReplacement)) {
-                    '|', 'L', 'F', '.' -> possibleSteps.add(PossibleStep(Point(i + 1, j), TOP, LEFT))
-                    '7', '-', 'J' -> Unit
-//                    'J' ->  possibleSteps.add(PossibleStep(Point(i + 1, j - 1), RIGHT, TOP))
-                    else -> error("unreachable $i $j")
-                }
-                // left top
-                if (j - 1 < 0) possibleSteps.add(PossibleStep(Point(i, j - 1), LEFT, TOP))
-                else when (input[i][j - 1].let(::sReplacement)) {
-                    '-', 'F', '7', '.' -> possibleSteps.add(PossibleStep(Point(i, j - 1), LEFT, TOP))
-                    '|', 'L', 'J' -> Unit
-                    else -> error("unreachable $i $j")
-                }
-                // left bottom
-                if (j - 1 < 0) possibleSteps.add(PossibleStep(Point(i, j - 1), LEFT, BOTTOM))
-                else when (input[i][j - 1].let(::sReplacement)) {
-                    '-', 'J', 'L', '.' -> possibleSteps.add(PossibleStep(Point(i, j - 1), LEFT, BOTTOM))
-                    '|', 'F', '7' -> Unit
-                    else -> error("unreachable $i $j")
-                }
-            }
-            if (from == null || to == null || from == TOP && to == RIGHT) {
-                // bottom right
-                if (i + 1 >= input.size) possibleSteps.add(PossibleStep(Point(i + 1, j), TOP, RIGHT))
-                else when (input[i + 1][j].let(::sReplacement)) {
-                    '|', 'J', '7', '.' -> possibleSteps.add(PossibleStep(Point(i + 1, j), TOP, RIGHT))
-                    'F', 'L', '-' -> Unit
-                    else -> error("unreachable $i $j")
-                }
-                // right top
-                if (j + 1 >= input[i].length) possibleSteps.add(PossibleStep(Point(i, j + 1), LEFT, TOP))
-                else when (input[i][j + 1].let(::sReplacement)) {
-                    '-', 'F', '7', '.' -> possibleSteps.add(PossibleStep(Point(i, j + 1), LEFT, TOP))
-                    '|', 'L', 'J' -> Unit
-                    else -> error("unreachable $i $j")
-                }
-                // right bottom
-                if (j + 1 >= input[i].length) possibleSteps.add(PossibleStep(Point(i, j + 1), LEFT, BOTTOM))
-                else when (input[i][j + 1].let(::sReplacement)) {
-                    '-', 'J', 'L', '.' -> possibleSteps.add(PossibleStep(Point(i, j + 1), LEFT, BOTTOM))
-                    '|', 'F', '7' -> Unit
-                    else -> error("unreachable $i $j")
-                }
-            }
-            if (from == null || to == null || from == BOTTOM && to == LEFT) {
-                // top left
-                if (i - 1 < 0) possibleSteps.add(PossibleStep(Point(i - 1, j), BOTTOM, LEFT))
-                else when (input[i - 1][j].let(::sReplacement)) {
-                    '|', 'L', 'F', '.' -> possibleSteps.add(PossibleStep(Point(i - 1, j), BOTTOM, LEFT))
-                    '-', 'J', '7' -> Unit
-                    else -> error("unreachable $i $j")
-                }
-                // left top
-                if (j - 1 < 0) possibleSteps.add(PossibleStep(Point(i, j - 1), LEFT, TOP))
-                else when (input[i][j - 1].let(::sReplacement)) {
-                    '-', 'F', '7', '.' -> possibleSteps.add(PossibleStep(Point(i, j - 1), LEFT, TOP))
-                    '|', 'L', 'J' -> Unit
-                    else -> error("unreachable $i $j")
-                }
-                // left bottom
-                if (j - 1 < 0) possibleSteps.add(PossibleStep(Point(i, j - 1), LEFT, BOTTOM))
-                else when (input[i][j - 1].let(::sReplacement)) {
-                    '-', 'J', 'L', '.' -> possibleSteps.add(PossibleStep(Point(i, j - 1), LEFT, BOTTOM))
-                    '|', 'F', '7' -> Unit
-                    else -> error("unreachable $i $j")
-                }
-            }
-            if (from == null || to == null || from == BOTTOM && to == RIGHT) {
-                // top right
-                if (i - 1 < 0) possibleSteps.add(PossibleStep(Point(i - 1, j), BOTTOM, RIGHT))
-                else when (input[i - 1][j].let(::sReplacement)) {
-                    '|', 'J', '7', '.' -> possibleSteps.add(PossibleStep(Point(i - 1, j), BOTTOM, RIGHT))
-                    'F', 'L', '-' -> Unit
-                    else -> error("unreachable $i $j")
-                }
-                // right top
-                if (j + 1 >= input[i].length) possibleSteps.add(PossibleStep(Point(i, j + 1), LEFT, LEFT))
-                else when (input[i][j + 1].let(::sReplacement)) {
-                    '-', 'F', '7', '.' -> possibleSteps.add(PossibleStep(Point(i, j + 1), LEFT, TOP))
-                    '|', 'L', 'J' -> Unit
-                    else -> error("unreachable $i $j")
-                }
-                // right bottom
-                if (j + 1 >= input[i].length) possibleSteps.add(PossibleStep(Point(i, j + 1), LEFT, BOTTOM))
-                else when (input[i][j + 1].let(::sReplacement)) {
-                    '-', 'J', 'L', '.' -> possibleSteps.add(PossibleStep(Point(i, j + 1), LEFT, BOTTOM))
-                    '|', 'F', '7' -> Unit
-                    else -> error("unreachable $i $j")
-                }
-            }
-            if (from == null || to == null || from == LEFT && to == TOP) {
-                // top left
-                if (i - 1 < 0) possibleSteps.add(PossibleStep(Point(i - 1, j), BOTTOM, LEFT))
-                else when (input[i - 1][j].let(::sReplacement)) {
-                    '|', 'L', 'F', '.' -> possibleSteps.add(PossibleStep(Point(i - 1, j), BOTTOM, LEFT))
-                    '-', 'J', '7' -> Unit
-                    else -> error("unreachable $i $j")
-                }
-                // top right
-                if (i - 1 < 0) possibleSteps.add(PossibleStep(Point(i - 1, j), BOTTOM, RIGHT))
-                else when (input[i - 1][j].let(::sReplacement)) {
-                    '|', 'J', '7', '.' -> possibleSteps.add(PossibleStep(Point(i - 1, j), BOTTOM, RIGHT))
-                    'F', 'L', '-' -> Unit
-                    else -> error("unreachable $i $j")
-                }
-                // right top
-                if (j + 1 >= input[i].length) possibleSteps.add(PossibleStep(Point(i, j + 1), LEFT, LEFT))
-                else when (input[i][j + 1].let(::sReplacement)) {
-                    '-', 'F', '7', '.' -> possibleSteps.add(PossibleStep(Point(i, j + 1), LEFT, TOP))
-                    '|', 'L', 'J' -> Unit
-                    else -> error("unreachable $i $j")
-                }
-            }
-            if (from == null || to == null || from == LEFT && to == BOTTOM) {
-                // right bottom
-                if (j + 1 >= input[i].length) possibleSteps.add(PossibleStep(Point(i, j + 1), LEFT, BOTTOM))
-                else when (input[i][j + 1].let(::sReplacement)) {
-                    '-', 'J', 'L', '.' -> possibleSteps.add(PossibleStep(Point(i, j + 1), LEFT, BOTTOM))
-                    '|', 'F', '7' -> Unit
-                    else -> error("unreachable $i $j")
-                }
-                // bottom left
-                if (i + 1 >= input.size) possibleSteps.add(PossibleStep(Point(i + 1, j), TOP, LEFT))
-                else when (input[i + 1][j].let(::sReplacement)) {
-                    '|', 'L', 'F', '.' -> possibleSteps.add(PossibleStep(Point(i + 1, j), TOP, LEFT))
-                    '7', 'J', '-' -> Unit
-                    else -> error("unreachable $i $j")
-                }
-                // bottom right
-                if (i + 1 >= input.size) possibleSteps.add(PossibleStep(Point(i + 1, j), TOP, RIGHT))
-                else when (input[i + 1][j].let(::sReplacement)) {
-                    '|', 'J', '7', '.' -> possibleSteps.add(PossibleStep(Point(i + 1, j), TOP, RIGHT))
-                    'F', 'L', '-' -> Unit
-                    else -> error("unreachable $i $j")
-                }
-            }
-            if (from == null || to == null || from == RIGHT && to == TOP) {
-                // top left
-                if (i - 1 < 0) possibleSteps.add(PossibleStep(Point(i - 1, j), BOTTOM, LEFT))
-                else when (input[i - 1][j].let(::sReplacement)) {
-                    '|', 'L', 'F', '.' -> possibleSteps.add(PossibleStep(Point(i - 1, j), BOTTOM, LEFT))
-                    '-', 'J', '7' -> Unit
-                    else -> error("unreachable $i $j")
-                }
-                // top right
-                if (i - 1 < 0) possibleSteps.add(PossibleStep(Point(i - 1, j), BOTTOM, RIGHT))
-                else when (input[i - 1][j].let(::sReplacement)) {
-                    '|', 'J', '7', '.' -> possibleSteps.add(PossibleStep(Point(i - 1, j), BOTTOM, RIGHT))
-                    'F', 'L', '-' -> Unit
-                    else -> error("unreachable $i $j")
-                }
-                // left top
-                if (j - 1 < 0) possibleSteps.add(PossibleStep(Point(i, j - 1), LEFT, TOP))
-                else when (input[i][j - 1].let(::sReplacement)) {
-                    '-', 'F', '7', '.' -> possibleSteps.add(PossibleStep(Point(i, j - 1), LEFT, TOP))
-                    '|', 'L', 'J' -> Unit
-                    else -> error("unreachable $i $j")
-                }
-            }
-            if (from == null || to == null || from == RIGHT && to == BOTTOM) {
-                // left bottom
-                if (j - 1 < 0) possibleSteps.add(PossibleStep(Point(i, j - 1), LEFT, BOTTOM))
-                else when (input[i][j - 1].let(::sReplacement)) {
-                    '-', 'J', 'L', '.' -> possibleSteps.add(PossibleStep(Point(i, j - 1), LEFT, BOTTOM))
-                    '|', 'F', '7' -> Unit
-                    else -> error("unreachable $i $j")
-                }
-                // bottom left
-                if (i + 1 >= input.size) possibleSteps.add(PossibleStep(Point(i + 1, j), TOP, LEFT))
-                else when (input[i + 1][j].let(::sReplacement)) {
-                    '|', 'L', 'F', '.' -> possibleSteps.add(PossibleStep(Point(i + 1, j), TOP, LEFT))
-                    '7', 'J', '-' -> Unit
-                    else -> error("unreachable $i $j")
-                }
-                // bottom right
-                if (i + 1 >= input.size) possibleSteps.add(PossibleStep(Point(i + 1, j), TOP, RIGHT))
-                else when (input[i + 1][j].let(::sReplacement)) {
-                    '|', 'J', '7', '.' -> possibleSteps.add(PossibleStep(Point(i + 1, j), TOP, RIGHT))
-                    'F', 'L', '-' -> Unit
-                    else -> error("unreachable $i $j")
-                }
-            }
+                        '7' -> {
+                            steps.add(Step(i - 1, j, BOTTOM))
+                            steps.add(Step(i + 1, j, RIGHT))
+                            steps.add(Step(i, j - 1, TOP))
+                            steps.add(Step(i, j + 1, LEFT))
+                        }
 
-            return possibleSteps
+                        'F' -> {
+                            steps.add(Step(i - 1, j, BOTTOM))
+                            steps.add(Step(i + 1, j, LEFT))
+                            steps.add(Step(i, j - 1, RIGHT))
+                            steps.add(Step(i, j + 1, TOP))
+                        }
+
+                        'L' -> {
+                            steps.add(Step(i - 1, j, RIGHT))
+                            steps.add(Step(i, j + 1, TOP))
+                        }
+
+                        'J' -> {
+                            steps.add(Step(i - 1, j, LEFT))
+                            steps.add(Step(i, j - 1, TOP))
+                        }
+
+                        else -> error("unreachable $i $j")
+                    }
+
+                    BOTTOM -> when (c) {
+                        // im in the -, L, J, .
+                        '-' -> {
+                            steps.add(Step(i + 1, j, TOP))
+                            steps.add(Step(i, j - 1, BOTTOM))
+                            steps.add(Step(i, j + 1, BOTTOM))
+                        }
+
+                        'L' -> {
+                            steps.add(Step(i - 1, j, LEFT))
+                            steps.add(Step(i + 1, j, TOP))
+                            steps.add(Step(i, j - 1, RIGHT))
+                            steps.add(Step(i, j + 1, BOTTOM))
+                        }
+
+                        'J' -> {
+                            steps.add(Step(i - 1, j, RIGHT))
+                            steps.add(Step(i + 1, j, TOP))
+                            steps.add(Step(i, j - 1, BOTTOM))
+                            steps.add(Step(i, j + 1, LEFT))
+                        }
+
+                        'F' -> {
+                            steps.add(Step(i + 1, j, RIGHT))
+                            steps.add(Step(i, j + 1, BOTTOM))
+                        }
+
+                        '7' -> {
+                            steps.add(Step(i + 1, j, LEFT))
+                            steps.add(Step(i, j - 1, BOTTOM))
+                        }
+
+                        else -> error("unreachable $i $j")
+                    }
+
+                    LEFT -> when (c) {
+                        // im in the |, ., L, J, 7, F
+                        '|' -> {
+                            steps.add(Step(i - 1, j, LEFT))
+                            steps.add(Step(i + 1, j, LEFT))
+                            steps.add(Step(i, j - 1, RIGHT))
+                        }
+
+                        'L' -> {
+                            steps.add(Step(i - 1, j, LEFT))
+                            steps.add(Step(i + 1, j, TOP))
+                            steps.add(Step(i, j - 1, RIGHT))
+                            steps.add(Step(i, j + 1, BOTTOM))
+                        }
+
+                        'J' -> {
+                            steps.add(Step(i - 1, j, LEFT))
+                            steps.add(Step(i, j - 1, TOP))
+                        }
+
+                        '7' -> {
+                            steps.add(Step(i + 1, j, LEFT))
+                            steps.add(Step(i, j - 1, BOTTOM))
+                        }
+
+                        'F' -> {
+                            steps.add(Step(i - 1, j, BOTTOM))
+                            steps.add(Step(i + 1, j, LEFT))
+                            steps.add(Step(i, j - 1, RIGHT))
+                            steps.add(Step(i, j + 1, TOP))
+                        }
+
+                        else -> error("unreachable $i $j")
+                    }
+
+                    RIGHT -> when (c) {
+                        // im in the |, ., L, J, 7, F
+
+                        '|' -> {
+                            steps.add(Step(i - 1, j, RIGHT))
+                            steps.add(Step(i + 1, j, RIGHT))
+                            steps.add(Step(i, j + 1, LEFT))
+                        }
+
+                        'L' -> {
+                            steps.add(Step(i - 1, j, RIGHT))
+                            steps.add(Step(i, j + 1, TOP))
+                        }
+
+                        'J' -> {
+                            steps.add(Step(i - 1, j, RIGHT))
+                            steps.add(Step(i + 1, j, TOP))
+                            steps.add(Step(i, j - 1, BOTTOM))
+                            steps.add(Step(i, j + 1, LEFT))
+                        }
+
+                        '7' -> {
+                            steps.add(Step(i - 1, j, BOTTOM))
+                            steps.add(Step(i + 1, j, RIGHT))
+                            steps.add(Step(i, j - 1, TOP))
+                            steps.add(Step(i, j + 1, LEFT))
+                        }
+
+                        'F' -> {
+                            steps.add(Step(i + 1, j, RIGHT))
+                            steps.add(Step(i, j + 1, BOTTOM))
+                        }
+
+                        else -> error("unreachable $i $j")
+                    }
+                }
+            }
+            return steps
         }
 
-        val canReachBorder = DeepRecursiveFunction<PossibleStep, Boolean> { step ->
-            val i = step.point.x
-            val j = step.point.y
+        val canReachBorder = DeepRecursiveFunction<Step, Boolean> { step ->
+            val i = step.x
+            val j = step.y
             if (i < 0 || i >= input.size || j < 0 || j >= input[i].length) true
-            else getPossibleSteps(i, j, step.from, step.to)
-                .filter { seen.add(it.copy(from = null)) }
+            else getPossibleSteps(i, j, step.to)
+                .filter { seen.add(it) }
                 .any { callRecursive(it) }
         }
 
-
-        return  !getPossibleSteps(x, y, null, null)
-            .any { step ->
-                canReachBorder(step)
-            }
+        // i am '.'
+        return Direction.entries
+            .flatMap { step -> getPossibleSteps(x, y, step) }
+            .none { step -> canReachBorder(step) }
     }
 
+    fun List<String>.removeExtraPipes(loop: Set<Point>) = mapIndexed { i, line ->
+        line.mapIndexed { j, c ->
+            val contains = loop.contains(Point(i, j))
+            if (!contains) '.'
+            else c
+        }.toCharArray().let(::String)
+    }
 
     fun part2(input: List<String>): Int {
         val loop = input.toLoop().toSet()
-        return input
-            .mapIndexed { i, line ->
-                line.mapIndexed { j, c ->
-                    val contains = loop.contains(Point(i, j))
-                    if (!contains) '.'
-                    else c
-                }.toCharArray().let(::String)
+        val cleanInput = input.removeExtraPipes(loop)
+        val output = cleanInput.map { it.toMutableList() }
+        return cleanInput
+            .asSequence()
+            .flatMapIndexed { i, line ->
+                line.mapIndexed { j, _ -> Point(i, j) }
             }
-            .let { newInput ->
-                val output = newInput.map { it.toMutableList() }
-                newInput.mapIndexed { i, line ->
-                    line.filterIndexed { j, c ->
-                        if (loop.contains(Point(i, j))) {
-                            false
-                        } else isEnclosedByLoop(newInput, i, j).also {
-                            output[i][j] = if (it) '.' else ' '
-                        }
-                    }
-                }
-                    .map { it.length }
-                    .sum()
-                    .also {
-                        println()
-                        println(output.joinToString("\n") { String(it.toCharArray()) })
-                    }
+            .filterNot { loop.contains(it) }
+            .filter { (i, j) ->
+                isInTheLoop(cleanInput, i, j)
+                    .also { canExit -> output[i][j] = if (canExit) '.' else ' ' }
+            }
+            .count()
+            .also {
+                println()
+                println(output.joinToString("\n") { String(it.toCharArray()) })
             }
     }
 
     // test if implementation meets criteria from the description, like:
     val testInput = readInput("Day10_test")
-//    check(part2(testInput).also { it.println() } == 4)
+    check(part2(testInput).also { it.println() } == 10)
 
     val input = readInput("Day10")
-//    part1(input).println()
+    part1(input).println()
     part2(input).println()
 }

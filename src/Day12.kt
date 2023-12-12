@@ -4,7 +4,7 @@ fun main() {
             if (i != faulty.size - 1) "#{$it}\\.+"
             else "#{$it}\\.*"
         }.joinToString(prefix = "^\\.*", postfix = "$", separator = "")
-            .let(::Regex)
+            .let { Regex(it) }
     }
 
     fun Springs.getArrangements(): Int {
@@ -16,7 +16,7 @@ fun main() {
         fun generate(content: CharArray, i: Int) {
             if (content.none { it == '?' }) {
                 val result = String(content)
-                if (!results.contains(result) && regex.matches(result)) {
+                if (results.add(result) && regex.matches(result)) {
                     results.add(result)
                 }
                 return
@@ -24,15 +24,32 @@ fun main() {
 
             (i..<content.size).forEach { j ->
                 if (content[j] == '?') {
-                    generate(content.copyOf().also { it[j] = '.' }, j + 1)
-                    generate(content.copyOf().also { it[j] = '#' }, j + 1)
+                    val left = generate(content.copyOf().also { it[j] = '.' }, j + 1)
+                    val right = generate(content.copyOf().also { it[j] = '#' }, j + 1)
+//                    left + right
                 } else {
-                    generate(content, j + 1)
+                    // find next '?'
+                    val u = (j..<content.size).find { u -> content[u] == '?' }
+                    if (u == null) {
+                        val result = String(content)
+                        if (!results.contains(result) && regex.matches(result)) {
+                            results.add(result)
+                        }
+                    }
+                    else generate(content, u)
                 }
             }
         }
 
-        generate(seq.toCharArray(), 0)
+        val start = System.currentTimeMillis()
+
+        val generate = generate(seq.toCharArray(), 0)
+//        val a = generate
+//            .map { String(it) }
+//            .distinct()
+//            .count { regex.matches(it) }
+
+        println("${System.currentTimeMillis() - start} ms")
 
         return results.size
     }
@@ -47,14 +64,25 @@ fun main() {
     }
 
     fun part2(input: List<String>): Int {
-        return input.size
+        return input
+            .map { line ->
+                val (springs, numbers) = line.split(' ')
+                Springs(springs, numbers.split(',').map { it.trim().toInt() })
+            }
+            .map { s ->
+                s.copy(
+                    seq = (1..5).joinToString("?") { s.seq },
+                    faulty = (1..5).flatMap { s.faulty },
+                )
+            }
+            .sumOf { a -> a.getArrangements().also { println(a to it) } }
     }
 
     // test if implementation meets criteria from the description, like:
     val testInput = readInput("Day12_test")
-    check(part1(testInput).also { it.println() } == 21)
+    check(part2(testInput).also { it.println() } == 525152)
 
     val input = readInput("Day12")
-    part1(input).println()
-    part2(input).println()
+//    part1(input).println()
+//    part2(input).println()
 }

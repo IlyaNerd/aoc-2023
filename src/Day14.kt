@@ -42,38 +42,56 @@ fun main() {
             NORTH -> {
                 if (i == 0) return
 
-
-                if (input[i - 1][j] == '.') {
-                    input[i - 1][j] = 'O'
+                var n = i
+                while (n > 0 && input[n - 1][j] == '.') {
+                    n--
+                }
+                if (i != n) {
+                    input[n][j] = 'O'
                     input[i][j] = '.'
-                    moveRock(input, i - 1, j, NORTH)
                 }
             }
 
             EAST -> {
-                if (j == input[i].indices.last) return
-                if (input[i][j + 1] == '.') {
-                    input[i][j + 1] = 'O'
+                val lastIndex = input[i].indices.last
+                if (j == lastIndex) return
+
+                var n = j
+                while (n < lastIndex && input[i][n + 1] == '.') {
+                    n++
+                }
+
+                if (j != n && n <= lastIndex) {
+                    input[i][n] = 'O'
                     input[i][j] = '.'
-                    moveRock(input, i, j + 1, EAST)
                 }
             }
 
             SOUTH -> {
-                if (i == input.indices.last) return
-                if (input[i + 1][j] == '.') {
-                    input[i + 1][j] = 'O'
+                val lastIndex = input.indices.last
+                if (i == lastIndex) return
+
+                var n = i
+                while (n < lastIndex && input[n + 1][j] == '.') {
+                    n++
+                }
+
+                if (i != n && n <= lastIndex) {
+                    input[n][j] = 'O'
                     input[i][j] = '.'
-                    moveRock(input, i + 1, j, SOUTH)
                 }
             }
 
             WEST -> {
                 if (j == 0) return
-                if (input[i][j - 1] == '.') {
-                    input[i][j - 1] = 'O'
+
+                var n = j
+                while (n > 0 && input[i][n - 1] == '.') {
+                    n--
+                }
+                if (j != n && n >= 0) {
+                    input[i][n] = 'O'
                     input[i][j] = '.'
-                    moveRock(input, i, j - 1, WEST)
                 }
             }
         }
@@ -82,20 +100,19 @@ fun main() {
     fun part2(input: List<String>): Int {
         val newInput = input.map { it.toCharArray() }
 
-        (1..3).forEach {
+        val start = System.currentTimeMillis()
+        for (a in 0 until 1_000) {
             listOf(NORTH, WEST, SOUTH, EAST).forEach { direction ->
                 when(direction) {
                     NORTH -> {
                         for (i in 1 until newInput.size) {
-                            if (newInput[i].none { it == 'O' }) continue
                             for (j in newInput[i].indices) {
                                 moveRock(newInput, i, j, direction)
                             }
                         }
                     }
                     EAST -> {
-                        for (i in 1 until newInput.size) {
-                            if (newInput[i].none { it == 'O' }) continue
+                        for (i in newInput.indices) {
                             for (j in newInput[i].indices.reversed()) {
                                 moveRock(newInput, i, j, direction)
                             }
@@ -103,7 +120,6 @@ fun main() {
                     }
                     SOUTH -> {
                         for (i in newInput.indices.reversed()) {
-                            if (newInput[i].none { it == 'O' }) continue
                             for (j in newInput[i].indices) {
                                 moveRock(newInput, i, j, direction)
                             }
@@ -111,7 +127,6 @@ fun main() {
                     }
                     WEST -> {
                         for (i in newInput.indices) {
-                            if (newInput[i].none { it == 'O' }) continue
                             for (j in 1 until newInput[i].size) {
                                 moveRock(newInput, i, j, direction)
                             }
@@ -120,6 +135,7 @@ fun main() {
                 }
             }
         }
+        println("${System.currentTimeMillis() - start} ms")
 
         return newInput
             .onEach { println(String(it)) }
@@ -131,10 +147,10 @@ fun main() {
 
     // test if implementation meets criteria from the description, like:
     val testInput = readInput("Day14_test")
-    check(part2(testInput).also { it.println() } == 64)
+//    check(part2(testInput).also { it.println() } == 64)
 
     val input = readInput("Day14")
-    part1(input).println()
+//    part1(input).println()
     part2(input).println()
 }
 

@@ -1,3 +1,6 @@
+import Day14.Direction
+import Day14.Direction.*
+
 fun main() {
     fun moveUp(input: List<CharArray>, i: Int, j: Int) {
         if (i == 0) return
@@ -31,8 +34,99 @@ fun main() {
             .sum()
     }
 
+    fun moveRock(input: List<CharArray>, i: Int, j: Int, direction: Direction) {
+        val c = input[i][j]
+        if (c != 'O') return
+
+        when (direction) {
+            NORTH -> {
+                if (i == 0) return
+
+
+                if (input[i - 1][j] == '.') {
+                    input[i - 1][j] = 'O'
+                    input[i][j] = '.'
+                    moveRock(input, i - 1, j, NORTH)
+                }
+            }
+
+            EAST -> {
+                if (j == input[i].indices.last) return
+                if (input[i][j + 1] == '.') {
+                    input[i][j + 1] = 'O'
+                    input[i][j] = '.'
+                    moveRock(input, i, j + 1, EAST)
+                }
+            }
+
+            SOUTH -> {
+                if (i == input.indices.last) return
+                if (input[i + 1][j] == '.') {
+                    input[i + 1][j] = 'O'
+                    input[i][j] = '.'
+                    moveRock(input, i + 1, j, SOUTH)
+                }
+            }
+
+            WEST -> {
+                if (j == 0) return
+                if (input[i][j - 1] == '.') {
+                    input[i][j - 1] = 'O'
+                    input[i][j] = '.'
+                    moveRock(input, i, j - 1, WEST)
+                }
+            }
+        }
+    }
+
     fun part2(input: List<String>): Int {
-        return input.size
+        val newInput = input.map { it.toCharArray() }
+
+        (1..3).forEach {
+            listOf(NORTH, WEST, SOUTH, EAST).forEach { direction ->
+                when(direction) {
+                    NORTH -> {
+                        for (i in 1 until newInput.size) {
+                            if (newInput[i].none { it == 'O' }) continue
+                            for (j in newInput[i].indices) {
+                                moveRock(newInput, i, j, direction)
+                            }
+                        }
+                    }
+                    EAST -> {
+                        for (i in 1 until newInput.size) {
+                            if (newInput[i].none { it == 'O' }) continue
+                            for (j in newInput[i].indices.reversed()) {
+                                moveRock(newInput, i, j, direction)
+                            }
+                        }
+                    }
+                    SOUTH -> {
+                        for (i in newInput.indices.reversed()) {
+                            if (newInput[i].none { it == 'O' }) continue
+                            for (j in newInput[i].indices) {
+                                moveRock(newInput, i, j, direction)
+                            }
+                        }
+                    }
+                    WEST -> {
+                        for (i in newInput.indices) {
+                            if (newInput[i].none { it == 'O' }) continue
+                            for (j in 1 until newInput[i].size) {
+                                moveRock(newInput, i, j, direction)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return newInput
+            .onEach { println(String(it)) }
+            .reversed()
+            .map { line -> line.count { it == 'O' } }
+            .mapIndexed { i, rocks -> rocks * (i + 1) }
+            .sum()
     }
 
     // test if implementation meets criteria from the description, like:
@@ -42,4 +136,10 @@ fun main() {
     val input = readInput("Day14")
     part1(input).println()
     part2(input).println()
+}
+
+private object Day14 {
+    enum class Direction {
+        NORTH, EAST, SOUTH, WEST
+    }
 }

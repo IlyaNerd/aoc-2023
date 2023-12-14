@@ -1,6 +1,6 @@
 import Direction.*
 
-enum class Direction {
+private enum class Direction {
     TOP, BOTTOM, LEFT, RIGHT
 }
 

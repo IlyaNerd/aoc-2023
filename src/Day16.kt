@@ -60,12 +60,11 @@ fun main() {
 
         val dupes = mutableSetOf<Step>()
 
-        val goTo = DeepRecursiveFunction<Step, Unit> { step ->
+        val goTo = DeepRecursiveFunction { step: Step ->
             val (i, j, direction) = step
             if (!dupes.add(step)) Unit
             else if (i < 0 || i >= input.size || j < 0 || j >= input[i].length) Unit
             else {
-                println(step to input[i][j])
                 seen.add(Point(i, j))
                 getSteps(i, j, direction).forEach {
                     callRecursive(it)
@@ -83,12 +82,22 @@ fun main() {
     }
 
     fun part2(input: List<String>): Int {
-        return input.size
+        val rowSteps = input.indices.flatMap { i ->
+            val lastJ = input[i].length - 1
+            listOf(Step(i, 0, Right), Step(i, lastJ, Left))
+        }
+        val colSteps = input.first().indices.flatMap { j ->
+            val lastI = input.size - 1
+            listOf(Step(0, j, Down), Step(lastI, j, Up))
+        }
+
+        return (rowSteps + colSteps)
+            .maxOf { goTo(input, it).size }
     }
 
     // test if implementation meets criteria from the description, like:
     val testInput = readInput("Day16_test")
-    check(part1(testInput).also { it.println() } == 46)
+    check(part2(testInput).also { it.println() } == 51)
 
     val input = readInput("Day16")
     part1(input).println()
